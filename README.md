@@ -11,9 +11,19 @@ python3 -m http.server 8080
 
 Open http://localhost:8080 on your phone (same Wi‑Fi): use your Mac’s local IP, e.g. http://192.168.1.x:8080
 
-## Use on your phone
+## Use on your phone (GitHub Pages — free)
 
-1. Serve the folder (command above, or deploy to Netlify/Vercel/GitHub Pages).
+See **[DEPLOY.md](DEPLOY.md)** for full steps. Short version:
+
+1. Run the **“Publish site to gh-pages”** workflow in the **Actions** tab.
+2. **Settings → Pages** → Branch **`gh-pages`** → **`/ (root)`** → Save.
+3. Open **https://anbritton.github.io/bass-interval-board/** on your phone.
+
+`localhost` only works on the Mac that is running the server, not on your phone.
+
+## Local dev on Mac
+
+1. Serve the folder (command above).
 2. Open the URL in Safari or Chrome.
 3. **iOS:** Share → Add to Home Screen for an app-like shortcut.
 4. Drag stickers onto any fret wire (replaces any sticker already there). Tap a placed sticker to remove it.
