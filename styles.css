@@ -428,10 +428,13 @@ body.settings-open {
   flex-shrink: 0;
 }
 
-/* Full-cell hit area; hover ring drawn on fret wire (sticker anchor) */
+/* Hit area biased to fret wire (right edge) where stickers land */
 .drop-target {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 35%;
   border: none;
   background: transparent;
   z-index: 1;
