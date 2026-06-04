@@ -334,8 +334,20 @@ function noteNameForMidi(midi, useFlats = scaleSettings.useFlats) {
   return (useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES)[pc];
 }
 
+/** Root = pitch class of the R sticker on the board, else Settings → Root. */
+function getEffectiveRootPitchClass() {
+  for (const [key, intervalId] of Object.entries(placements)) {
+    if (intervalId === "R") {
+      const [s, f] = key.split("-").map(Number);
+      return pitchClassForMidi(midiAt(s, f));
+    }
+  }
+  return rootPitchClass();
+}
+
 function semitoneFromRoot(midi) {
-  return (pitchClassForMidi(midi) - rootPitchClass() + 12) % 12;
+  const rootPc = getEffectiveRootPitchClass();
+  return (pitchClassForMidi(midi) - rootPc + 12) % 12;
 }
 
 function intervalLabelForMidi(midi, useFlats = scaleSettings.useFlats) {
@@ -354,10 +366,21 @@ function intervalSemitone(intervalId) {
   return INTERVAL_SEMITONES[intervalId];
 }
 
+/** e.g. #5 and b6 are both 8 semitones above the root */
+function intervalIdsMatchingSemitone(semi) {
+  return Object.entries(INTERVAL_SEMITONES)
+    .filter(([, s]) => s === semi)
+    .map(([id]) => id);
+}
+
 function isValidPlacement(stringIdx, fret, intervalId) {
-  const expectedSemi = semitoneFromRoot(midiAt(stringIdx, fret));
+  if (intervalId === "R") return true;
+
   const placedSemi = intervalSemitone(intervalId);
-  return placedSemi !== undefined && placedSemi === expectedSemi;
+  if (placedSemi === undefined) return false;
+
+  const expectedSemi = semitoneFromRoot(midiAt(stringIdx, fret));
+  return intervalIdsMatchingSemitone(expectedSemi).includes(intervalId);
 }
 
 function midiAt(stringIdx, fret) {
@@ -373,7 +396,7 @@ function rootPitchClass() {
 }
 
 function scalePitchClasses() {
-  const root = rootPitchClass();
+  const root = getEffectiveRootPitchClass();
   const def = SCALES[scaleSettings.type] ?? SCALES.major;
   return new Set(def.intervals.map((i) => (root + i) % 12));
 }
@@ -383,7 +406,7 @@ function isInScale(midi) {
 }
 
 function isRootTone(midi) {
-  return pitchClassForMidi(midi) === rootPitchClass();
+  return pitchClassForMidi(midi) === getEffectiveRootPitchClass();
 }
 
 function savePlacements() {
@@ -537,6 +560,9 @@ function placeStickerOnCell(dropTarget, intervalId, persist = true) {
 
   if (persist) {
     placements[key] = intervalId;
+    if (intervalId === "R") {
+      buildFretboard();
+    }
   }
 }
 
