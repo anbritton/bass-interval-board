@@ -14,6 +14,8 @@
   --radius: 10px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 *,
@@ -584,7 +586,8 @@ body.settings-open {
   flex-shrink: 0;
   background: var(--surface);
   border-bottom: 1px solid #2a241e;
-  padding: calc(4px + var(--safe-top)) 8px 6px;
+  padding: calc(4px + var(--safe-top)) max(10px, var(--safe-left)) 6px
+    max(10px, var(--safe-right));
 }
 
 .palette-hint {
@@ -592,12 +595,12 @@ body.settings-open {
   font-size: 0.62rem;
   color: var(--muted);
   line-height: 1.2;
+  text-align: center;
 }
 
-.palette {
+.palette-scroll {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
+  justify-content: center;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -605,8 +608,20 @@ body.settings-open {
   scrollbar-width: none;
 }
 
-.palette::-webkit-scrollbar {
+.palette-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.palette-scroll--overflow {
+  justify-content: flex-start;
+}
+
+.palette {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  width: max-content;
+  margin-inline: auto;
 }
 
 .palette .sticker {
@@ -647,6 +662,10 @@ body.layout-compact .header h1 {
 body.layout-compact .palette-section {
   max-height: 52px;
   padding: 4px 8px;
+}
+
+body.layout-compact .palette-scroll {
+  max-height: 44px;
 }
 
 body.layout-compact .palette {

@@ -528,6 +528,13 @@ function buildFretboard() {
   applyFretboardLayout();
 }
 
+function layoutPaletteScroll() {
+  const scroll = document.getElementById("palette-scroll");
+  if (!scroll || !paletteEl) return;
+  const overflows = paletteEl.scrollWidth > scroll.clientWidth + 1;
+  scroll.classList.toggle("palette-scroll--overflow", overflows);
+}
+
 function buildPalette() {
   paletteEl.innerHTML = "";
   INTERVALS.forEach((interval) => {
@@ -535,6 +542,7 @@ function buildPalette() {
     paletteEl.appendChild(el);
     attachDragHandlers(el, { source: "palette", intervalId: interval.id });
   });
+  requestAnimationFrame(layoutPaletteScroll);
 }
 
 function createStickerElement(intervalId, isPalette = false) {
