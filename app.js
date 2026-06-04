@@ -55,6 +55,8 @@ const SCALES = {
 
 const FRET_COUNT = 20;
 const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19]);
+/** Portrait: ~this many frets visible before horizontal scroll */
+const PORTRAIT_VISIBLE_FRETS = 10;
 
 /** Relative fret spans (nut wide → bridge narrow) before fitting to screen. */
 const FRET_WIDTH_MAX_PX = 48;
@@ -87,9 +89,14 @@ function isLandscapeCompact() {
   );
 }
 
+function isPortrait() {
+  return window.innerWidth < window.innerHeight;
+}
+
 function updateLayoutMode() {
   document.body.classList.toggle("layout-touch", isTouchMobile());
   document.body.classList.toggle("layout-compact", isLandscapeCompact());
+  document.body.classList.toggle("layout-portrait", isPortrait());
 }
 
 function getFretboardAreaSize(wrap) {
@@ -98,11 +105,11 @@ function getFretboardAreaSize(wrap) {
   const vv = window.visualViewport;
   const viewH = vv?.height ?? window.innerHeight;
   const viewW = vv?.width ?? window.innerWidth;
-  const headerH = header?.getBoundingClientRect().height ?? 0;
-  const paletteH = palette?.getBoundingClientRect().height ?? 0;
-  const availH = Math.max(100, viewH - headerH - paletteH - 6);
+  const headerH = header?.getBoundingClientRect().height ?? 48;
+  const paletteH = palette?.getBoundingClientRect().height ?? 52;
+  const availH = Math.max(80, viewH - headerH - paletteH - 4);
   const availW = Math.max(200, wrap.clientWidth || viewW - 12);
-  return { availW, availH };
+  return { availW, availH, viewH, viewW };
 }
 
 function applyFretboardLayout() {
@@ -111,39 +118,59 @@ function applyFretboardLayout() {
 
   updateLayoutMode();
 
-  const { availW, availH } = getFretboardAreaSize(wrap);
+  const { availW, availH, viewW, viewH } = getFretboardAreaSize(wrap);
   if (availH < 60 || availW < 60) {
     requestAnimationFrame(applyFretboardLayout);
     return;
   }
 
   const mobile = isTouchMobile();
-  const boardPadX = 8;
-  const boardPadY = 8;
+  const portrait = isPortrait();
+  const boardPadX = 6;
+  const boardPadY = 6;
 
   const stringCol = Math.round(
-    Math.max(mobile ? 30 : 26, Math.min(56, availW * (mobile ? 0.08 : 0.07)))
+    Math.max(mobile ? 28 : 26, Math.min(48, availW * 0.075))
   );
-  const labelRow = Math.round(Math.max(14, Math.min(26, availH * 0.08)));
+  const labelRow = Math.round(Math.max(12, Math.min(22, availH * 0.07)));
   const innerH = availH - boardPadY * 2 - labelRow;
-  const stringGap = Math.floor(
-    Math.max(mobile ? 40 : 24, innerH / STRINGS.length)
-  );
+  const stringGap = Math.floor(innerH / STRINGS.length);
 
-  const innerW = Math.max(180, availW - boardPadX * 2 - stringCol);
   const weights = fretTaperWeights();
-  const sumW = weights.reduce((a, b) => a + b, 0);
-  const scale = innerW / sumW;
-  const minFretPx = mobile ? 14 : 7;
-  let colWidths = weights.map((w) => Math.max(minFretPx, Math.floor(w * scale)));
-  let totalCols = colWidths.reduce((a, b) => a + b, 0);
+  const innerW = availW - boardPadX * 2 - stringCol;
+  let colWidths;
+  let useHScroll = false;
 
-  if (totalCols < innerW) {
-    colWidths[0] += innerW - totalCols;
-    totalCols = innerW;
-    wrap.classList.remove("fretboard-wrap--scroll-x");
-    fretboardEl.style.width = "100%";
-  } else if (totalCols > innerW) {
+  if (portrait) {
+    const minFretPx = Math.max(
+      30,
+      Math.min(46, Math.floor(innerW / PORTRAIT_VISIBLE_FRETS))
+    );
+    const taperScale = minFretPx / FRET_WIDTH_MIN_PX;
+    colWidths = weights.map((w) =>
+      Math.max(minFretPx - 2, Math.round(w * taperScale))
+    );
+    useHScroll = true;
+  } else {
+    const sumW = weights.reduce((a, b) => a + b, 0);
+    const scale = innerW / sumW;
+    const minFretPx = mobile ? 12 : 7;
+    colWidths = weights.map((w) => Math.max(minFretPx, Math.floor(w * scale)));
+    const totalCols = colWidths.reduce((a, b) => a + b, 0);
+    if (totalCols > innerW) {
+      const minFretPx2 = Math.max(22, Math.floor(innerW / 14));
+      const taperScale = minFretPx2 / FRET_WIDTH_MIN_PX;
+      colWidths = weights.map((w) =>
+        Math.max(minFretPx2, Math.round(w * taperScale))
+      );
+      useHScroll = true;
+    } else if (totalCols < innerW) {
+      colWidths[0] += innerW - totalCols;
+    }
+  }
+
+  const totalCols = colWidths.reduce((a, b) => a + b, 0);
+  if (useHScroll) {
     wrap.classList.add("fretboard-wrap--scroll-x");
     fretboardEl.style.width = `${stringCol + totalCols}px`;
   } else {
@@ -153,7 +180,10 @@ function applyFretboardLayout() {
 
   const boardH = labelRow + stringGap * STRINGS.length + boardPadY * 2;
   fretboardEl.style.height = `${boardH}px`;
-  fretboardEl.style.maxHeight = "none";
+  fretboardEl.style.maxHeight = `${availH}px`;
+
+  const hint = document.getElementById("fret-scroll-hint");
+  if (hint) hint.hidden = !useHScroll;
   fretboardEl.style.gridTemplateColumns = `${stringCol}px ${colWidths.map((w) => `${w}px`).join(" ")}`;
   fretboardEl.style.gridTemplateRows = `${labelRow}px repeat(${STRINGS.length}, ${stringGap}px)`;
 
@@ -162,7 +192,10 @@ function applyFretboardLayout() {
     mobile ? 32 : 18,
     Math.min(mobile ? 48 : 34, Math.round(stringGap * (mobile ? 0.58 : 0.5)))
   );
-  const paletteSticker = Math.max(stickerSize, mobile ? 34 : 26);
+  const paletteSticker = Math.max(
+    mobile ? 28 : 24,
+    Math.min(mobile ? 36 : 30, stickerSize)
+  );
   root.style.setProperty("--string-gap", `${stringGap}px`);
   root.style.setProperty("--sticker-size", `${stickerSize}px`);
   root.style.setProperty("--palette-sticker-size", `${paletteSticker}px`);
