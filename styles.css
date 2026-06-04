@@ -106,31 +106,31 @@ header .subtitle {
 
 .settings-panel {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  bottom: max(12px, var(--safe-bottom));
   z-index: 4001;
   display: block;
-  max-height: min(88dvh, 520px);
+  width: min(360px, calc(100vw - 28px));
+  max-height: min(72dvh, 440px);
   background: var(--surface);
-  border-radius: 16px 16px 0 0;
-  border-top: 1px solid #3d352c;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
-  transform: translateY(100%);
+  border-radius: 14px;
+  border: 1px solid #3d352c;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, calc(100% + 24px));
   transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
   pointer-events: none;
 }
 
 .settings-panel.is-open {
-  transform: translateY(0);
+  transform: translate(-50%, 0);
   pointer-events: auto;
 }
 
 .settings-panel-inner {
-  max-height: min(88dvh, 520px);
+  max-height: min(68dvh, 400px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 14px calc(16px + var(--safe-bottom));
+  padding: 12px 14px 14px;
 }
 
 .settings-panel-head {
