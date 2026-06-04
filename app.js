@@ -56,21 +56,85 @@ const SCALES = {
 const FRET_COUNT = 20;
 const FRET_MARKERS = new Set([3, 5, 7, 9, 12, 15, 17, 19]);
 
-/** Nut-side frets are wider; they taper toward the bridge (fret 20). */
+/** Relative fret spans (nut wide → bridge narrow) before fitting to screen. */
 const FRET_WIDTH_MAX_PX = 48;
 const FRET_WIDTH_MIN_PX = 24;
 
-function fretColumnWidthsPx() {
-  const widths = [];
+function fretTaperWeights() {
+  const weights = [];
   for (let f = 0; f <= FRET_COUNT; f++) {
     const t = f / FRET_COUNT;
     const eased = t * t * (3 - 2 * t);
-    const w = Math.round(
+    weights.push(
       FRET_WIDTH_MAX_PX - (FRET_WIDTH_MAX_PX - FRET_WIDTH_MIN_PX) * eased
     );
-    widths.push(w);
   }
-  return widths;
+  return weights;
+}
+
+const fretboardWrapEl = () => document.querySelector(".fretboard-wrap");
+
+function applyFretboardLayout() {
+  const wrap = fretboardWrapEl();
+  if (!wrap || !fretboardEl.childElementCount) return;
+
+  const { width: availW, height: availH } = wrap.getBoundingClientRect();
+  const boardPadX = 10;
+  const boardPadY = 10;
+
+  const stringCol = Math.round(Math.max(26, Math.min(52, availW * 0.07)));
+  const labelRow = Math.round(Math.max(12, Math.min(24, availH * 0.065)));
+  const innerH = Math.max(120, availH - boardPadY * 2 - labelRow);
+  const stringGap = Math.floor(
+    Math.max(22, Math.min(100, innerH / STRINGS.length))
+  );
+
+  const innerW = Math.max(160, availW - boardPadX * 2 - stringCol);
+  const weights = fretTaperWeights();
+  const sumW = weights.reduce((a, b) => a + b, 0);
+  const scale = innerW / sumW;
+  const colWidths = weights.map((w) => Math.max(7, Math.floor(w * scale)));
+  const totalCols = colWidths.reduce((a, b) => a + b, 0);
+  if (totalCols < innerW) colWidths[0] += innerW - totalCols;
+
+  fretboardEl.style.width = "100%";
+  fretboardEl.style.height = "100%";
+  fretboardEl.style.gridTemplateColumns = `${stringCol}px ${colWidths.map((w) => `${w}px`).join(" ")}`;
+  fretboardEl.style.gridTemplateRows = `${labelRow}px repeat(${STRINGS.length}, ${stringGap}px)`;
+
+  const root = document.documentElement;
+  const stickerSize = Math.max(18, Math.min(34, Math.round(stringGap * 0.5)));
+  root.style.setProperty("--string-gap", `${stringGap}px`);
+  root.style.setProperty("--sticker-size", `${stickerSize}px`);
+  root.style.setProperty(
+    "--fret-label-size",
+    `${Math.max(8, Math.min(12, labelRow * 0.45))}px`
+  );
+  root.style.setProperty(
+    "--note-label-size",
+    `${Math.max(8, Math.min(12, stringGap * 0.22))}px`
+  );
+  root.style.setProperty(
+    "--string-name-size",
+    `${Math.max(9, Math.min(13, stringGap * 0.26))}px`
+  );
+}
+
+let fretboardResizeObserver;
+
+function initFretboardLayoutWatch() {
+  const wrap = fretboardWrapEl();
+  if (!wrap) return;
+
+  const scheduleLayout = () => requestAnimationFrame(applyFretboardLayout);
+
+  if (!fretboardResizeObserver) {
+    fretboardResizeObserver = new ResizeObserver(scheduleLayout);
+    fretboardResizeObserver.observe(wrap);
+    window.addEventListener("resize", scheduleLayout);
+    window.addEventListener("orientationchange", scheduleLayout);
+  }
+  scheduleLayout();
 }
 
 const INTERVALS = [
@@ -245,9 +309,6 @@ function getInterval(id) {
 
 function buildFretboard() {
   fretboardEl.innerHTML = "";
-  const colWidths = fretColumnWidthsPx();
-  fretboardEl.style.gridTemplateColumns = `44px ${colWidths.map((w) => `${w}px`).join(" ")}`;
-  fretboardEl.style.gridTemplateRows = `24px repeat(${STRINGS.length}, var(--string-gap))`;
 
   const nutLabel = document.createElement("div");
   nutLabel.className = "fret-label nut-col";
@@ -324,6 +385,8 @@ function buildFretboard() {
 
     fretboardEl.appendChild(inlay);
   });
+
+  applyFretboardLayout();
 }
 
 function buildPalette() {
@@ -659,3 +722,4 @@ document.getElementById("btn-save").addEventListener("click", savePlacements);
 initScaleControls();
 buildFretboard();
 buildPalette();
+initFretboardLayoutWatch();
