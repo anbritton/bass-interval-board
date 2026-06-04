@@ -283,6 +283,9 @@ const labelModeRadios = document.querySelectorAll('input[name="label-mode"]');
 let dragState = null;
 
 const DRAG_THRESHOLD_PX = 10;
+/** Max distance (px) from fret wire to snap a drop onto that fret */
+const DROP_SNAP_RADIUS_MOBILE = 72;
+const DROP_SNAP_RADIUS_DESKTOP = 48;
 
 function cellKey(stringIdx, fret) {
   return `${stringIdx}-${fret}`;
@@ -311,7 +314,7 @@ function loadScaleSettings() {
     root: "C",
     type: "major",
     showNotes: false,
-    useFlats: false,
+    useFlats: true,
     labelMode: "alphabet",
   };
   try {
@@ -601,12 +604,53 @@ function clearDragHighlight() {
   });
 }
 
+function dropAnchorPoint(drop) {
+  const rect = drop.getBoundingClientRect();
+  return { x: rect.right, y: rect.top + rect.height / 2 };
+}
+
+function dropSnapRadius() {
+  return isTouchMobile() ? DROP_SNAP_RADIUS_MOBILE : DROP_SNAP_RADIUS_DESKTOP;
+}
+
+/** Snap to the fret wire closest to x,y (sticker center), not just element under finger */
+function findNearestDropTarget(x, y) {
+  let best = null;
+  let bestDist = Infinity;
+
+  fretboardEl.querySelectorAll(".drop-target").forEach((drop) => {
+    const anchor = dropAnchorPoint(drop);
+    const dist = Math.hypot(x - anchor.x, y - anchor.y);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = drop;
+    }
+  });
+
+  return bestDist <= dropSnapRadius() ? best : null;
+}
+
 function findDropTargetAtPoint(x, y) {
   const ghost = dragState?.el;
   if (ghost) ghost.style.visibility = "hidden";
   const hit = document.elementFromPoint(x, y);
   if (ghost) ghost.style.visibility = "";
   return hit?.closest?.(".drop-target") ?? null;
+}
+
+/** Use sticker center for aim; fall back to nearest wire, then element hit test */
+function findDropTargetForDrag(clientX, clientY) {
+  const ghost = dragState?.el;
+  if (ghost) {
+    const rect = ghost.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const nearest = findNearestDropTarget(cx, cy);
+    if (nearest) return nearest;
+  }
+  const nearestFinger = findNearestDropTarget(clientX, clientY);
+  if (nearestFinger) return nearestFinger;
+  return findDropTargetAtPoint(clientX, clientY);
 }
 
 function beginDrag(e) {
@@ -662,7 +706,7 @@ function onPointerDragMove(e) {
   positionDragGhost(e.clientX, e.clientY);
 
   clearDragHighlight();
-  const target = findDropTargetAtPoint(e.clientX, e.clientY);
+  const target = findDropTargetForDrag(e.clientX, e.clientY);
   if (target) highlightDropTarget(target);
 }
 
@@ -720,14 +764,18 @@ function onPointerDragEnd(e) {
 
   clearDragHighlight();
 
-  const target = findDropTargetAtPoint(e.clientX, e.clientY);
+  const target = findDropTargetForDrag(e.clientX, e.clientY);
+  const ghostRect = ghost.getBoundingClientRect();
+  const dropX = ghostRect.left + ghostRect.width / 2;
+  const dropY = ghostRect.top + ghostRect.height / 2;
+
   if (target) {
     const stringIdx = Number(target.dataset.string);
     const fret = Number(target.dataset.fret);
 
     if (!isValidPlacement(stringIdx, fret, meta.intervalId)) {
       dragState = null;
-      playInvalidDrop(ghost, e.clientX, e.clientY, hiddenSource);
+      playInvalidDrop(ghost, dropX, dropY, hiddenSource);
       return;
     }
 
