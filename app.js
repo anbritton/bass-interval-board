@@ -152,8 +152,8 @@ function applyFretboardLayout() {
   }
 
   const boardH = labelRow + stringGap * STRINGS.length + boardPadY * 2;
-  fretboardEl.style.height = `${Math.max(boardH, availH)}px`;
-  fretboardEl.style.maxHeight = `${availH}px`;
+  fretboardEl.style.height = `${boardH}px`;
+  fretboardEl.style.maxHeight = "none";
   fretboardEl.style.gridTemplateColumns = `${stringCol}px ${colWidths.map((w) => `${w}px`).join(" ")}`;
   fretboardEl.style.gridTemplateRows = `${labelRow}px repeat(${STRINGS.length}, ${stringGap}px)`;
 
@@ -750,8 +750,12 @@ function initSettingsPanel() {
   const backdrop = document.getElementById("settings-backdrop");
 
   const open = () => {
-    panel.classList.add("is-open");
-    backdrop.classList.add("is-open");
+    backdrop.hidden = false;
+    panel.hidden = false;
+    requestAnimationFrame(() => {
+      panel.classList.add("is-open");
+      backdrop.classList.add("is-open");
+    });
     panel.setAttribute("aria-hidden", "false");
     backdrop.setAttribute("aria-hidden", "false");
     btnOpen.setAttribute("aria-expanded", "true");
@@ -765,7 +769,11 @@ function initSettingsPanel() {
     backdrop.setAttribute("aria-hidden", "true");
     btnOpen.setAttribute("aria-expanded", "false");
     document.body.classList.remove("settings-open");
-    requestAnimationFrame(applyFretboardLayout);
+    setTimeout(() => {
+      panel.hidden = true;
+      backdrop.hidden = true;
+      requestAnimationFrame(applyFretboardLayout);
+    }, 280);
   };
 
   btnOpen.addEventListener("click", open);
