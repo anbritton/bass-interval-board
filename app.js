@@ -97,6 +97,16 @@ function updateLayoutMode() {
   document.body.classList.toggle("layout-touch", isTouchMobile());
   document.body.classList.toggle("layout-compact", isLandscapeCompact());
   document.body.classList.toggle("layout-portrait", isPortrait());
+  syncPaletteLayoutVars();
+}
+
+function syncPaletteLayoutVars() {
+  const palette = document.querySelector(".palette-section");
+  if (!palette) return;
+  document.documentElement.style.setProperty(
+    "--palette-bottom",
+    `${palette.getBoundingClientRect().bottom}px`
+  );
 }
 
 function getFretboardAreaSize(wrap) {
@@ -211,6 +221,7 @@ function applyFretboardLayout() {
     "--string-name-size",
     `${Math.max(10, Math.min(15, stringGap * 0.3))}px`
   );
+  syncPaletteLayoutVars();
 }
 
 let fretboardResizeObserver;
@@ -936,8 +947,16 @@ document.getElementById("btn-clear").addEventListener("click", () => {
 
 document.getElementById("btn-save").addEventListener("click", savePlacements);
 
+function ensurePaletteOnTop() {
+  const main = document.querySelector(".main");
+  const palette = document.querySelector(".palette-section");
+  if (!main || !palette || main.firstElementChild === palette) return;
+  main.insertBefore(palette, main.firstElementChild);
+}
+
 initScaleControls();
 initSettingsPanel();
+ensurePaletteOnTop();
 buildFretboard();
 buildPalette();
 initFretboardLayoutWatch();

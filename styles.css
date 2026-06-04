@@ -13,6 +13,7 @@
   --string-gap: clamp(40px, 11vw, 52px);
   --radius: 10px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 *,
@@ -314,6 +315,7 @@ body.settings-open {
   overflow: hidden;
   padding: 4px 6px 6px;
   position: relative;
+  order: 2;
 }
 
 .fretboard-wrap--scroll-x {
@@ -576,11 +578,13 @@ body.settings-open {
   transform: translate(-50%, -50%);
 }
 
+/* order keeps palette above fretboard even if cached HTML has old DOM order */
 .palette-section {
+  order: 1;
   flex-shrink: 0;
   background: var(--surface);
-  border-top: 1px solid #2a241e;
-  padding: 4px 8px calc(6px + var(--safe-bottom));
+  border-bottom: 1px solid #2a241e;
+  padding: calc(4px + var(--safe-top)) 8px 6px;
 }
 
 .palette-hint {
@@ -658,7 +662,7 @@ body.layout-compact .palette-hint--short {
 }
 
 body.layout-compact .palette-section {
-  padding: 3px 8px calc(4px + var(--safe-bottom));
+  padding: calc(3px + var(--safe-top)) 8px 4px;
 }
 
 body.layout-compact .fretboard-wrap {
@@ -683,10 +687,10 @@ body.layout-compact .fretboard-wrap {
   display: none !important;
 }
 
-/* Saved — floating above palette */
+/* Saved — just below palette strip at top */
 .toast:not(.toast--fretboard) {
   position: fixed;
-  bottom: calc(80px + var(--safe-bottom));
+  top: calc(var(--palette-bottom, 112px) + 8px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 3000;
