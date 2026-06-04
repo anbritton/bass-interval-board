@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#1a1510" />
     <title>Bass Interval Board</title>
-    <link rel="stylesheet" href="styles.css?v=8" />
+    <link rel="stylesheet" href="styles.css?v=10" />
   </head>
   <body>
     <header class="header">
@@ -93,6 +93,11 @@
     </aside>
 
     <main class="main">
+      <section class="palette-section" aria-label="Interval stickers">
+        <p class="palette-hint palette-hint--short">Place R on your root note first · then other intervals</p>
+        <div id="palette" class="palette"></div>
+      </section>
+
       <section class="fretboard-wrap" aria-label="Fretboard">
         <p id="fret-scroll-hint" class="fret-scroll-hint" hidden>
           Swipe left/right for more frets
@@ -100,13 +105,8 @@
         <div id="fretboard" class="fretboard"></div>
         <div id="toast" class="toast" hidden></div>
       </section>
-
-      <section class="palette-section" aria-label="Interval stickers">
-        <p class="palette-hint palette-hint--short">Place R on your root note first · then other intervals</p>
-        <div id="palette" class="palette"></div>
-      </section>
     </main>
 
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=10"></script>
   </body>
 </html>
