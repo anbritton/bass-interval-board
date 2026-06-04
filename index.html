@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#1a1510" />
+    <title>Bass Interval Board</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>Bass Interval Board</h1>
+      <p class="subtitle">G on top, B on bottom — stickers snap to fret wires</p>
+      <div class="scale-controls">
+        <label class="control">
+          <span class="control-label">Root</span>
+          <select id="scale-root" class="select"></select>
+        </label>
+        <label class="control">
+          <span class="control-label">Scale</span>
+          <select id="scale-type" class="select"></select>
+        </label>
+        <label class="control control-check">
+          <input type="checkbox" id="show-scale-notes" />
+          <span>Show scale on neck</span>
+        </label>
+        <div class="control control-segment">
+          <span class="control-label">Display as</span>
+          <div class="segmented" role="group" aria-label="Label type">
+            <label class="segmented-option">
+              <input type="radio" name="label-mode" value="alphabet" checked />
+              <span>Alphabet</span>
+            </label>
+            <label class="segmented-option">
+              <input type="radio" name="label-mode" value="interval" />
+              <span>Interval</span>
+            </label>
+          </div>
+        </div>
+        <label class="control control-check" id="accidental-wrap">
+          <input type="checkbox" id="use-flats" />
+          <span id="accidental-label">Use ♭ (flats)</span>
+        </label>
+      </div>
+      <div class="toolbar">
+        <button type="button" id="btn-clear" class="btn">Clear board</button>
+        <button type="button" id="btn-save" class="btn btn-primary">Save</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="fretboard-wrap" aria-label="Fretboard">
+        <div id="fretboard" class="fretboard"></div>
+        <div id="toast" class="toast" hidden></div>
+      </section>
+
+      <section class="palette-section" aria-label="Interval stickers">
+        <h2 class="palette-title">Intervals</h2>
+        <p class="palette-hint">Match the interval at each fret · wrong drops bounce off · tap sticker to remove</p>
+        <div id="palette" class="palette"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
