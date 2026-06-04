@@ -127,10 +127,7 @@ function applyFretboardLayout() {
   const labelRow = Math.round(Math.max(14, Math.min(26, availH * 0.08)));
   const innerH = availH - boardPadY * 2 - labelRow;
   const stringGap = Math.floor(
-    Math.max(
-      mobile ? 38 : 22,
-      Math.min(mobile ? 130 : 100, innerH / STRINGS.length)
-    )
+    Math.max(mobile ? 40 : 24, innerH / STRINGS.length)
   );
 
   const innerW = Math.max(180, availW - boardPadX * 2 - stringCol);
@@ -155,8 +152,8 @@ function applyFretboardLayout() {
   }
 
   const boardH = labelRow + stringGap * STRINGS.length + boardPadY * 2;
-  fretboardEl.style.height = `${boardH}px`;
-  fretboardEl.style.minHeight = `${Math.min(boardH, availH)}px`;
+  fretboardEl.style.height = `${Math.max(boardH, availH)}px`;
+  fretboardEl.style.maxHeight = `${availH}px`;
   fretboardEl.style.gridTemplateColumns = `${stringCol}px ${colWidths.map((w) => `${w}px`).join(" ")}`;
   fretboardEl.style.gridTemplateRows = `${labelRow}px repeat(${STRINGS.length}, ${stringGap}px)`;
 
@@ -746,6 +743,39 @@ function applyScaleSettingsToUi() {
   syncAccidentalUi();
 }
 
+function initSettingsPanel() {
+  const btnOpen = document.getElementById("btn-settings");
+  const btnClose = document.getElementById("btn-settings-close");
+  const panel = document.getElementById("settings-panel");
+  const backdrop = document.getElementById("settings-backdrop");
+
+  const open = () => {
+    panel.classList.add("is-open");
+    backdrop.classList.add("is-open");
+    panel.setAttribute("aria-hidden", "false");
+    backdrop.setAttribute("aria-hidden", "false");
+    btnOpen.setAttribute("aria-expanded", "true");
+    document.body.classList.add("settings-open");
+  };
+
+  const close = () => {
+    panel.classList.remove("is-open");
+    backdrop.classList.remove("is-open");
+    panel.setAttribute("aria-hidden", "true");
+    backdrop.setAttribute("aria-hidden", "true");
+    btnOpen.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("settings-open");
+    requestAnimationFrame(applyFretboardLayout);
+  };
+
+  btnOpen.addEventListener("click", open);
+  btnClose.addEventListener("click", close);
+  backdrop.addEventListener("click", close);
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && panel.classList.contains("is-open")) close();
+  });
+}
+
 function initScaleControls() {
   Object.entries(SCALES).forEach(([id, def]) => {
     const opt = document.createElement("option");
@@ -792,6 +822,7 @@ document.getElementById("btn-clear").addEventListener("click", () => {
 document.getElementById("btn-save").addEventListener("click", savePlacements);
 
 initScaleControls();
+initSettingsPanel();
 buildFretboard();
 buildPalette();
 initFretboardLayoutWatch();
