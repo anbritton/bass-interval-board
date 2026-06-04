@@ -222,6 +222,7 @@ function applyFretboardLayout() {
     `${Math.max(10, Math.min(15, stringGap * 0.3))}px`
   );
   syncPaletteLayoutVars();
+  layoutPaletteScroll();
 }
 
 let fretboardResizeObserver;
